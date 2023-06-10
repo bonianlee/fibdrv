@@ -6,6 +6,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/slab.h>
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -23,12 +24,15 @@ static dev_t fib_dev = 0;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
 static int major = 0, minor = 0;
+static ktime_t kt;
 
 static long long fib_sequence(long long k)
 {
     /* FIXME: C99 variable-length array (VLA) is not allowed in Linux kernel. */
-    long long f[k + 2];
-
+    long long *f = kmalloc((k + 2) * sizeof(long long), GFP_KERNEL);
+    if (!f) {
+        return 0;
+    }
     f[0] = 0;
     f[1] = 1;
 
@@ -60,7 +64,10 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
-    return (ssize_t) fib_sequence(*offset);
+    ktime_t start = ktime_get();
+    long long bn = fib_sequence(*offset);
+    kt = ktime_sub(ktime_get(), start);
+    return (ssize_t) bn;
 }
 
 /* write operation is skipped */
@@ -69,7 +76,7 @@ static ssize_t fib_write(struct file *file,
                          size_t size,
                          loff_t *offset)
 {
-    return 1;
+    return (ssize_t) kt;
 }
 
 static loff_t fib_device_lseek(struct file *file, loff_t offset, int orig)
