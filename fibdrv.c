@@ -29,10 +29,8 @@ static ktime_t kt;
 static long long fib_sequence(long long k)
 {
     /* FIXME: C99 variable-length array (VLA) is not allowed in Linux kernel. */
-    long long *f = kmalloc((k + 2) * sizeof(long long), GFP_KERNEL);
-    if (!f) {
-        return 0;
-    }
+    long long f[k + 2];
+
     f[0] = 0;
     f[1] = 1;
 

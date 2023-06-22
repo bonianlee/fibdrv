@@ -29,3 +29,10 @@ dkms.conf
 # test-oriented
 client
 out
+
+# MyFile
+data.png
+data2.png
+TimeTaken.txt
+UserTimeTaken.txt
+driver.py
