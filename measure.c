@@ -25,6 +25,7 @@ int main()
     }
     FILE *fptr_ut = fopen("UserTimeTaken.txt", "w");
     if (!fptr_ut) {
+        fclose(fptr_kt);
         return 0;
     }
     for (int i = 0; i <= offset; i++) {
@@ -47,9 +48,8 @@ int main()
     }
     // fclose(fptr_kt);
     // fclose(fptr_ut);
-    fptr_kt.flush();
-    fptr_kt.close();
-    fptr_ut.close();
+    fclose(fptr_kt);
+    fclose(fptr_ut);
     close(fd);
     return 0;
 }
