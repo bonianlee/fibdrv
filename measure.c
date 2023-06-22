@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #define FIB_DEV "/dev/fibonacci"
@@ -18,22 +19,37 @@ int main()
         perror("Failed to open character device");
         exit(1);
     }
-    FILE *fptr = fopen("TimeTaken.txt", "w");
-    if (!fptr) {
+    FILE *fptr_kt = fopen("TimeTaken.txt", "w");
+    if (!fptr_kt) {
+        return 0;
+    }
+    FILE *fptr_ut = fopen("UserTimeTaken.txt", "w");
+    if (!fptr_ut) {
         return 0;
     }
     for (int i = 0; i <= offset; i++) {
         long long sz, kt;
+        struct timespec t1, t2;
         lseek(fd, i, SEEK_SET);
+        clock_gettime(CLOCK_MONOTONIC, &t1);
         sz = read(fd, buf, 1);
+        clock_gettime(CLOCK_MONOTONIC, &t2);
+        long long ut =
+            ((t2.tv_sec * 1e9 + t2.tv_nsec) - (t1.tv_sec * 1e9 + t1.tv_nsec));
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
                "%lld.\n",
                i, sz);
         kt = write(fd, write_buf, 0);
         printf("Time taken to calculate the sequence %lld.\n", kt);
-        fprintf(fptr, "Time taken at offset %d : %lld.\n", i, kt);
+        fprintf(fptr_kt, "Time taken at offset %d : %lld\n", i, kt);
+        fprintf(fptr_ut, "Time taken at offset %d : %lld\n", i, ut);
     }
+    // fclose(fptr_kt);
+    // fclose(fptr_ut);
+    fptr_kt.flush();
+    fptr_kt.close();
+    fptr_ut.close();
     close(fd);
     return 0;
 }
