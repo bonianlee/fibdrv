@@ -10,7 +10,7 @@
 
 int main()
 {
-    char buf[1];
+    char buf[1000];
     char write_buf[] = "testing writing";
     int offset = 1000; /* TODO: try test something bigger than the limit */
 
@@ -39,15 +39,13 @@ int main()
             ((t2.tv_sec * 1e9 + t2.tv_nsec) - (t1.tv_sec * 1e9 + t1.tv_nsec));
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
-               "%lld.\n",
-               i, sz);
+               "%s.\n",
+               i, buf);
         kt = write(fd, write_buf, 0);
-        printf("Time taken to calculate the sequence %lld.\n", kt);
-        fprintf(fptr_kt, "Time taken at offset %d : %lld\n", i, kt);
+        printf("Time taken to calculate the sequence %lld.\n", sz);
+        fprintf(fptr_kt, "Time taken at offset %d : %lld\n", i, sz);
         fprintf(fptr_ut, "Time taken at offset %d : %lld\n", i, ut);
     }
-    // fclose(fptr_kt);
-    // fclose(fptr_ut);
     fclose(fptr_kt);
     fclose(fptr_ut);
     close(fd);

@@ -24,16 +24,16 @@ if __name__ == "__main__":
     Ys = []
     for i in range(runs):
         # comp_proc_user = subprocess.run('sudo ./client > /dev/null', shell = True)
-        comp_proc_kernel = subprocess.run('sudo ./measure > /dev/null', shell = True)
-        kernelOutput = np.loadtxt('TimeTaken.txt', dtype = 'float', delimiter = ':', usecols = 1).T
-        userOutput = np.loadtxt('UserTimeTaken.txt', dtype = 'float', delimiter = ':', usecols = 1).T
+        comp_proc_kernel = subprocess.run('sudo ./measure_bn > /dev/null', shell = True)
+        kernelOutput = np.loadtxt("TimeTaken.txt", dtype = 'float', delimiter = ':', usecols = 1).T
+        userOutput = np.loadtxt("UserTimeTaken.txt", dtype = 'float', delimiter = ':', usecols = 1).T
         user2kernelOutput = userOutput-kernelOutput
         output = np.vstack((kernelOutput,userOutput,user2kernelOutput))
         Ys.append(np.delete(output, 0, axis=1))
 
 
 
-    X = range(0,len(Ys[0][0]))
+    X = range(len(Ys[0][0]))
     Y = data_processing(Ys, runs)
 
     fig, ax = plt.subplots(1, 1, sharey = True)

@@ -13,11 +13,11 @@ def loadfile(filename):
 
 if __name__ == '__main__':
     time1 = loadfile('/home/bonian/LinuxKernelImplement/fibdrv/TimeTaken.txt')
-    X = range(101)
+    X = range(len(time1))
     fig = plt.figure()
     plt.xlabel("nth fabonacci")
     plt.ylabel("time (ns)")
-    plt.title("Time Measurement of Original Fabonacci Sequence")
+    plt.title("Time Measurement of Fabonacci Sequence in Kernel")
     plt.plot(X, time1, marker = '+', markersize = 8, label = 'running time')
     plt.legend()
     plt.grid()
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     fig.savefig('data.png')
 
     time1 = loadfile('/home/bonian/LinuxKernelImplement/fibdrv/UserTimeTaken.txt')
-    X = range(101)
+    X = range(len(time1))
     fig = plt.figure()
     plt.xlabel("nth fabonacci")
     plt.ylabel("time (ns)")

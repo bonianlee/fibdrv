@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
+#include "bn.h"
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -18,7 +19,7 @@ MODULE_VERSION("0.1");
 /* MAX_LENGTH is set to 92 because
  * ssize_t can't fit the number > 92
  */
-#define MAX_LENGTH 92
+#define MAX_LENGTH 1000
 
 static dev_t fib_dev = 0;
 static struct class *fib_class;
@@ -39,6 +40,55 @@ static long long fib_sequence(long long k)
     }
 
     return f[k];
+}
+
+static long long fib_fast_doubling(long long k)
+{
+    long long f[k + 2];
+    f[0] = 0;
+    f[1] = 1;
+    for (uint64_t i = 1ULL << 63; i; i >>= 1) {
+        long long n0 = f[0] * (2 * f[1] - f[0]);
+        long long n1 = f[0] * f[0] + f[1] * f[1];
+        if (k & i) {
+            f[0] = n1;
+            f[1] = n0 + n1;
+        } else {
+            f[0] = n0;
+            f[1] = n1;
+        }
+    }
+    return f[0];
+}
+
+// ref
+int fibn_per_32bit(int k)
+{
+    return k < 2 ? 1 : ((long) k * 694242 - 1160964) / (1000000) + 1;
+}
+
+void bn_fib(bn *ret, unsigned int n)
+{
+    int nsize = fibn_per_32bit(n) / 32 + 1;
+    bn_resize(ret, nsize);
+    if (n < 2) {
+        ret->number[0] = n;
+        return;
+    }
+
+    bn *f1 = bn_alloc(nsize);
+    bn *tmp = bn_alloc(nsize);
+    ret->number[0] = 0;
+    f1->number[0] = 1;
+
+    for (unsigned int i = 1; i < n + 1; i++) {
+        bn_add(ret, f1, tmp);
+        bn_swap(f1, ret);
+        bn_swap(f1, tmp);
+    }
+
+    bn_free(f1);
+    bn_free(tmp);
 }
 
 static int fib_open(struct inode *inode, struct file *file)
@@ -62,10 +112,18 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
+    bn *fib = bn_alloc(1);
     ktime_t start = ktime_get();
-    long long bn = fib_sequence(*offset);
+    // long long bn = fib_sequence(*offset);
+    // long long bn = fib_fast_doubling(*offset);
+    bn_fib(fib, *offset);
     kt = ktime_sub(ktime_get(), start);
-    return (ssize_t) bn;
+    char *p = bn_to_string(*fib);
+    size_t len = strlen(p) + 1;
+    copy_to_user(buf, p, len);
+    bn_free(fib);
+    // return (ssize_t) bn;
+    return ktime_to_ns(kt);
 }
 
 /* write operation is skipped */
@@ -74,7 +132,7 @@ static ssize_t fib_write(struct file *file,
                          size_t size,
                          loff_t *offset)
 {
-    return (ssize_t) kt;
+    return (ssize_t) ktime_to_ns(kt);
 }
 
 static loff_t fib_device_lseek(struct file *file, loff_t offset, int orig)
